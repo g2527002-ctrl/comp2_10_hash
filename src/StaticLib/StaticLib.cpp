@@ -14,8 +14,19 @@ static unsigned int get_hash(const hash* h, unsigned int key)
 	if (h == NULL) return ~0;
 	if (key == ~0) return ~0;
 
-	// ToDo: ハッシュ関数としてhash_funcを使った
-	// オープンアドレス法によるハッシュ値を求める
+	unsigned int start_index = hash_func(key, h->max_size);
+	unsigned int i = start_index;
+
+	do 
+	{
+		if (h->nodes[i].key == ~0 || h->nodes[i].key == key)
+		{
+			return i;
+		}
+		i = (i + 1) % h->max_size;
+
+	} while (i != start_index);
+
 	return ~0;
 }
 
@@ -30,7 +41,8 @@ bool initialize(hash* h, unsigned int max_size)
 	h->nodes = (hash_node*)malloc(max_size * sizeof(hash_node));
 	if (NULL == h->nodes) return false;
 
-	for (unsigned int i = 0; i < max_size; i++) {
+	for (unsigned int i = 0; i < max_size; i++) 
+	{
 		h->nodes[i].key = ~0;
 		h->nodes[i].value[0] = '\0';
 	}
@@ -50,28 +62,46 @@ void finalize(hash* h)
 	h->max_size = 0;
 }
 
-// keyの値を見てノードを追加する(追加できなかったらfalseを返す)
+// keyの値を見てノードを追加する
 bool add(hash* h, unsigned int key, const char* value)
 {
+
 	if (h == NULL) return false;
 	if (h->max_size == ~0) return false;
-	if (key == ~0) return NULL;
+	if (key == ~0) return false;
 
-	// ToDo: ハッシュ関数としてhash_funcを使った
-	// オープンアドレス法によりキーを追加
-	return false;
+
+	unsigned int index = get_hash(h, key);
+
+
+	if (index == ~0) return false;
+
+	h->nodes[index].key = key;
+
+	for (int i = 0; i < 256; i++) 
+	{
+		h->nodes[index].value[i] = value[i];
+		if (value[i] == '\0') break;
+	}
+
+	return true;
 }
 
-// keyの値を見てノードを検索して、値を取得する(なければNULLを返す)
+// keyの値を見てノードを検索して、値を取得する
 const char* get(const hash* h, unsigned int key)
 {
 	if (key == ~0) return NULL;
 
-	// ToDo: keyから値が格納されている場所を求め、値の場所を返す
+	unsigned int index = get_hash(h, key);
+
+	if (index != ~0 && h->nodes[index].key == key) 
+	{
+		return h->nodes[index].value;
+	}
+
 	return NULL;
 }
 
-// ハッシュの値を取得する(デバッグ用)
 int debug_get_hash(const hash* h, unsigned int key)
 {
 	return get_hash(h, key);
